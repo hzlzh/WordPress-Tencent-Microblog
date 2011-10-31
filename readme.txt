@@ -3,33 +3,35 @@ Contributors: hzlzh
 Donate link: http://zlz.im/wordpress-tencent-microblog/
 Tags: 腾讯微博,QQ,微博,腾讯,同步
 Requires at least: 2.7
-Tested up to: 3.0.4
-Stable tag: 1.0.9
+Tested up to: 3.2.1
+Stable tag: 1.1.0
 
 显示腾讯微博发言的插件，Oauth登录认证，安全可靠，采取缓存机制，官方API，支持1-10条发言输出。
 
 == Description ==
 
-显示腾讯微博发言的插件，Oauth认证，即可从 <a href="http://q.hzlzh.com/">API</a> 处获得消息，显示在wordpress侧边栏上，安全可靠。采用了缓存机制，可自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，也可以在任意位置使用`<?php display_tencent('username=you-ID&number=5'); ?>` 调用。
+显示腾讯微博发言的插件，Oauth认证，即可从官方处获得消息，显示在wordpress侧边栏上，安全可靠。采用了缓存机制，可自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，也可以在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>` 调用。
 
 == Installation ==
 
 1. 上传 `wordpress-tencent-microblog`插件到 `/wp-content/plugins/` 目录
 2. 在Wordpress后台控制面板"插件(Plugins)"菜单下激活"wordpress-tencent-microblog"
 3. 在Wordpress后台控制面板"外观(Appearance)->小工具(Widgets)"下使用`腾讯微博`
-4. 首次使用需激活API，点击后前往http://q.hzlzh.com/认证！
+4. 首次使用需激活API，点击后前往 http://open.t.qq.com/resource.php?i=3,3/ 获取
+5. 将得到的sign值填写到插件后台即可
 
 == Frequently Asked Questions ==
 
 = 我不想在侧边栏调用，而是在任意位置可以么？怎么做？ =
 
-可以！需要激活插件后，在任意位置使用`<?php display_tencent('username=you-ID&number=5'); ?>`调用即可，只需要修改`you-ID` 为你的腾讯微博帐号，`5`是你想要展示的条数。
+可以！需要激活插件后，在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>`调用即可，只需要修改`Weibo_ID` 为你的腾讯微博帐号，`5`是你想要展示的条数。
 
 
 
 = 使用之前必须先Oauth认证登录吗？ =
 
-是的第一次使用，需要认证，一次认证终身使用。
+这一版不需要任何Oauth认证，参照 <a target
+="_blank" href="http://img.zlz.im/wp-tencent-microblog/tip.png">此图</a> 只需要前往 <a href="http://open.t.qq.com/resource.php?i=3,3">官方开发平台</a>
 
 = 如果我的HOST不支持copy()函数怎么办？ =
 
@@ -41,6 +43,9 @@ Stable tag: 1.0.9
 2. 后台截图
 
 == Changelog ==
+
+= V 1.1.0 =
+*使用腾讯微博官方提供的 RSS/JSON 接口获取数据，安全快速。
 
 = V 1.0.9 =
 *使用Oauth认证得到API来获取信息
