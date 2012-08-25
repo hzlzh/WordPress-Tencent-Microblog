@@ -1,24 +1,25 @@
 === Wordpress Tencent Microblog ===
 Contributors: hzlzh
 Donate link: http://zlz.im/wordpress-tencent-microblog/
-Tags: 腾讯微博,QQ,微博,腾讯,同步
+Tags: 腾讯微博,QQ,微博,腾讯,同步,Tencent,microblog,weibo
 Requires at least: 2.7
-Tested up to: 3.2.1
-Stable tag: 1.1.0
+Tested up to: 3.3.2
+Stable tag: 1.1.1
 
-显示腾讯微博发言的插件，Oauth登录认证，安全可靠，采取缓存机制，官方API，支持1-10条发言输出。
+显示腾讯微博发言的插件，精简，纯洁，快速，安全可靠，采取缓存机制，官方API接口，支持1-10条发言输出。
 
 == Description ==
 
-显示腾讯微博发言的插件，Oauth认证，即可从官方处获得消息，显示在wordpress侧边栏上，安全可靠。采用了缓存机制，可自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，也可以在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>` 调用。
+显示腾讯微博发言的插件，从官方处获得时间轴，[使用方法截图](http://plugins.svn.wordpress.org/wordpress-tencent-microblog/trunk/tip.png "获取Sign值的方法")，安全可靠。采用了缓存机制，可自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，也可以在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>` 调用。
 
 == Installation ==
 
 1. 上传 `wordpress-tencent-microblog`插件到 `/wp-content/plugins/` 目录
 2. 在Wordpress后台控制面板"插件(Plugins)"菜单下激活"wordpress-tencent-microblog"
 3. 在Wordpress后台控制面板"外观(Appearance)->小工具(Widgets)"下使用`腾讯微博`
-4. 首次使用需激活API，点击后前往 http://open.t.qq.com/resource.php?i=3,3/ 获取
+4. 首次使用需激活API，点击后前往 http://dev.open.t.qq.com/websites/sign?explain=1 获取
 5. 将得到的sign值填写到插件后台即可
+6. 具体操作见 `How-to-use.png` 或 `http://plugins.svn.wordpress.org/wordpress-tencent-microblog/trunk/tip.png`
 
 == Frequently Asked Questions ==
 
@@ -31,7 +32,7 @@ Stable tag: 1.1.0
 = 使用之前必须先Oauth认证登录吗？ =
 
 这一版不需要任何Oauth认证，参照 <a target
-="_blank" href="http://img.zlz.im/wp-tencent-microblog/tip.png">此图</a> 只需要前往 <a href="http://open.t.qq.com/resource.php?i=3,3">官方开发平台</a>
+="_blank" href="http://plugins.svn.wordpress.org/wordpress-tencent-microblog/trunk/tip.png">此图</a> 只需要前往 <a href="http://dev.open.t.qq.com/websites/sign?explain=1">官方开发平台</a>
 
 = 如果我的HOST不支持copy()函数怎么办？ =
 
@@ -43,6 +44,10 @@ Stable tag: 1.1.0
 2. 后台截图
 
 == Changelog ==
+
+= V 1.1.1 =
+*更新了使用方法和获取Sign值的教程图
+*添加了插件页面banner图
 
 = V 1.1.0 =
 *使用腾讯微博官方提供的 RSS/JSON 接口获取数据，安全快速。

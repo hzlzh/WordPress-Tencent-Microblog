@@ -3,9 +3,9 @@
 Plugin Name: Wordpress Tencent Microblog
 Plugin URI: http://zlz.im/wordpress-tencent-microblog/
 Description: 显示腾讯微博发言的插件，无需密码，安全可靠。采用了缓存机制，自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，或者在任意位置使用 <code>&lt;?php display_tencent('username=you-ID&number=5'); ?&gt;</code> 调用。
-Version: 1.1.0
+Version: 1.1.1
 Author: hzlzh
-Author URI: http://zlz.im
+Author URI: http://zlz.im/
 
 */
 //如果有遇到问题，请到http://zlz.im/wordpress-tencent-microblog/ 得到服务支持！
@@ -40,7 +40,7 @@ function display_tencent($args = ''){
 		$jsonObject.=$f[$i];
 	}
 }else{
-echo "<div>该主机不支持本插件，由于禁用了copy()或file_get_contents()等函数，请在http://zlz.im/wordpress-tencent-microblog/ 告知出错原因，便于我维护更新插件！</div>";
+echo "<div>您的网站主机不支持本插件，由于禁用了copy()或file_get_contents()等函数，请在http://zlz.im/wordpress-tencent-microblog/ 告知出错原因，便于我维护更新插件！</div>";
 		}
 	}
 }
@@ -76,7 +76,7 @@ class TencentMicroblog extends WP_Widget
 		$api = htmlspecialchars($instance['api']);
 		$number = htmlspecialchars($instance['number']);
 		$time = htmlspecialchars($instance['time']);
-		echo '<p><b>首次使用获取官方API--></b><a target="_blank" href="http://open.t.qq.com/resource.php?i=3,3">点此获取</a></p><p style="color:#FF3333;">任何问题请@我的微博<a target="_blank" href="http://t.qq.com/hzlzh-com">hzlzh-com</a> 反馈</p><p><label for="'.$this->get_field_name('title').'">侧边栏标题:<input style="width:200px;" id="'.$this->get_field_id('title').'" name="'.$this->get_field_name('title').'" type="text" value="'.$title.'" /></label></p>
+		echo '<p><b>首次使用获取官方API--></b><a target="_blank" href="http://dev.open.t.qq.com/websites/sign?explain=1">点此获取</a></p><p style="color:#FF3333;">任何问题请@我的微博<a target="_blank" href="http://t.qq.com/hzlzh-com">hzlzh-com</a> 反馈</p><p><label for="'.$this->get_field_name('title').'">侧边栏标题:<input style="width:200px;" id="'.$this->get_field_id('title').'" name="'.$this->get_field_name('title').'" type="text" value="'.$title.'" /></label></p>
 		<p><label for="'.$this->get_field_name('username').'">用户名:<input style="width:200px;" id="'.$this->get_field_id('username').'" name="'.$this->get_field_name('username').'" type="text" value="'.$username.'" /></label></p>
 		<p><label for="'.$this->get_field_name('api').'">API地址(sign值): <a target="_blank" href="http://zlz.im/wordpress-tencent-microblog/">[?]</a><input style="width:200px;" id="'.$this->get_field_id('api').'" name="'.$this->get_field_name('api').'" type="text" value="'.$api.'" /></label></p>
 		<p><label for="'.$this->get_field_name('number').'">显示数量:<input style="width:200px" id="'.$this->get_field_id('number').'" name="'.$this->get_field_name('number').'" type="text" value="'.$number.'" /></label></p>
