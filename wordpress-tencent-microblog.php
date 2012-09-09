@@ -17,7 +17,7 @@ if ( ! defined( 'WP_PLUGIN_DIR' ) )
 
 set_include_path( dirname( dirname( __FILE__ ) ) . '/wordpress-tencent-microblog/lib/' );
 require_once 'OpenSDK/Tencent/Weibo.php';
-include 'tencentappkey.php';
+include 'OpenSDK/Tencent/tencentappkey.php';
 
 OpenSDK_Tencent_Weibo::init( $appkey, $appsecret );
 //打开session
