@@ -2,118 +2,160 @@
 /*
 Plugin Name: Wordpress Tencent Microblog
 Plugin URI: http://zlz.im/wordpress-tencent-microblog/
-Description: 显示腾讯微博发言的插件，无需密码，安全可靠。采用了缓存机制，自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，或者在任意位置使用 <code>&lt;?php display_tencent('username=you-ID&number=5'); ?&gt;</code> 调用。
-Version: 1.1.1
+Description: 显示腾讯微博发言的插件，OAuth认证授权，安全可靠。采用了缓存机制，自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，或者在任意位置使用 <code>&lt;?php display_tencent('username=you-ID&number=5'); ?&gt;</code> 调用。
+Version: 1.1.2
 Author: hzlzh
 Author URI: http://zlz.im/
 
 */
-//如果有遇到问题，请到http://zlz.im/wordpress-tencent-microblog/ 得到服务支持！
+
+//如果有遇到问题，请到http://zlz.im/wordpress-tencent-microblog/ 得到技术支持！
 if ( ! defined( 'WP_PLUGIN_URL' ) )
-      define( 'WP_PLUGIN_URL', WP_CONTENT_URL. '/plugins' );//获得plugins网页路径
+	define( 'WP_PLUGIN_URL', WP_CONTENT_URL. '/plugins' );//获得plugins网页路径
 if ( ! defined( 'WP_PLUGIN_DIR' ) )
-      define( 'WP_PLUGIN_DIR', WP_CONTENT_URL. '/plugins' );//获得plugins直接路径
+	define( 'WP_PLUGIN_DIR', WP_CONTENT_URL. '/plugins' );//获得plugins直接路径
+
+set_include_path( dirname( dirname( __FILE__ ) ) . '/wordpress-tencent-microblog/lib/' );
+require_once 'OpenSDK/Tencent/Weibo.php';
+include 'tencentappkey.php';
+
+OpenSDK_Tencent_Weibo::init( $appkey, $appsecret );
+//打开session
+session_start();
+$WTM_settings1 = get_option( 'WTM_settings' );
+if ( $WTM_settings1 ) {
+	OpenSDK_Tencent_Weibo::setParam ( OpenSDK_Tencent_Weibo::ACCESS_TOKEN, $WTM_settings1['access_token'] );
+	OpenSDK_Tencent_Weibo::setParam ( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET, $WTM_settings1['oauth_token_secret'] );
+}else {
+	//echo 'dnoe';
+}
+
+$exit = false;
+if ( isset( $_GET['exit'] ) ) {
+	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN, null );
+	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::ACCESS_TOKEN, null );
+	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET, null );
+	//echo '<a href="?go_oauth">点击去授权</a>';
+}else if ( OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::ACCESS_TOKEN ) &&
+		OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET )
+	) {
+		$uinfo = OpenSDK_Tencent_Weibo::call( 'statuses/broadcast_timeline',
+			array(
+				'type' => '1',
+				'contenttype' => '0',
+			) );
+	}
+else if ( isset( $_GET['oauth_token'] ) && isset( $_GET['oauth_verifier'] ) ) {
+		//从Callback返回时
+		if ( OpenSDK_Tencent_Weibo::getAccessToken( $_GET['oauth_verifier'] ) ) {
+			$uinfo = OpenSDK_Tencent_Weibo::call( 'user/info' );
+			$WTM_settings = array( 'WTM_settings' );
+			$WTM_settings['oauth_token'] = $_GET['oauth_token'];
+			$WTM_settings['oauth_verifier'] = $_GET['oauth_verifier'];
+			$WTM_settings['access_token'] = OpenSDK_Tencent_Weibo::getParam( OpenSDK_Tencent_Weibo::ACCESS_TOKEN );
+			$WTM_settings['oauth_token_secret'] = OpenSDK_Tencent_Weibo::getParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET );
+			update_option( 'WTM_settings', $WTM_settings );
+			//var_dump($uinfo);
+		}
+		$exit = true;
+	}
+else if ( isset( $_GET['go_oauth'] ) ) {
+		$callback = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+		$request_token = OpenSDK_Tencent_Weibo::getRequestToken( $callback );
+		$url = OpenSDK_Tencent_Weibo::getAuthorizeURL( $request_token );
+		header( 'Location: ' . $url );
+	}else if ( $exit || isset( $_GET['exit'] ) ) {
+		delete_option( 'WTM_settings' );
+	}
 
 //展示函数
-function display_tencent($args = ''){
+function display_tencent( $args = '' ) {
 	$default = array(
 		'username'=>'Weibo_ID',
 		'number'=>'1',
-		'api'=>'4735433f9fbf9bb2983d9095595f5c5c36abdd0b',
-		'time'=>'3600');
-	$r = wp_parse_args($args,$default);
-	extract($r);
-	$url = 'http://v.t.qq.com/output/json.php?type=1&name='.$username.'&sign='.$api;
-	if(function_exists("copy")){
-	$e = WP_PLUGIN_DIR.'/wordpress-tencent-microblog/'.$username.'.json';
-	if ( !is_file($e) || (time() - filemtime($e)) > $time|| filesize($e) < 1000){
-	//当缓存不存在或超过 $time 时更新,或者得到文件大小小于1000
-	copy($url, $e);}//拷贝到本地，一般主机都支持这个函数,需要目录的写入权限
-	$jsonObject = substr(file_get_contents($e),10,-1);
-}else{
-	if(function_exists("file_get_contents")){
-	$jsonObject = file_get_contents($url);
-}else{
-	if(function_exists( "file")){
-	$f=file($url);
-	for($i=0;$i<count($f);$i++){
-		$jsonObject.=$f[$i];
+		'time'=>'3600' );
+	$r = wp_parse_args( $args, $default );
+	extract( $r );
+
+	$uinfo = OpenSDK_Tencent_Weibo::call( 'statuses/broadcast_timeline',
+		array(
+			'reqnum' => $number,
+			'type' => '1',
+			'contenttype' => '0',
+		) );
+
+	$decodedArray =$uinfo;
+	echo '<ul style="list-style-type:none;">';
+	foreach ( $decodedArray['data']['info'] as $value ) {
+		echo '<li><div class="microblog"><a href="http://t.qq.com/'.$value['nick'].'" rel="external nofollow" title="来自 腾讯微博" target="_blank" style="padding-right:3px;"><img class="microblog-ico"  alt="腾讯微博" src="'.WP_PLUGIN_URL.'/wordpress-tencent-microblog/txwb.png" /></a><span class="microblog-content">'.str_replace( '&#160;', ' ', $value['origtext'] ).'</span>  <span class="microblog-from" style="font-size:smaller;">-'.date( "Y/m/d", $value['timestamp'] ).' 来自 '.$value['from'].'-</span></div></li>';
 	}
-}else{
-echo "<div>您的网站主机不支持本插件，由于禁用了copy()或file_get_contents()等函数，请在http://zlz.im/wordpress-tencent-microblog/ 告知出错原因，便于我维护更新插件！</div>";
-		}
-	}
-}
-$decodedArray =json_decode($jsonObject, true);
-if($number - count($decodedArray['data']) >0)
-$number = count($decodedArray['data']);
-		echo '<ul style="list-style-type:none;">';
-		for($i = 0;$i< $number;$i++){
-			echo '<li><div class="microblog"><a href="http://t.qq.com/'.$username.'" rel="external nofollow" title="来自 腾讯微博" target="_blank" style="padding-right:3px;"><img class="microblog-ico"  alt="腾讯微博" src="'.WP_PLUGIN_URL.'/wordpress-tencent-microblog/txwb.png" /></a><span class="microblog-content">'.str_replace('&#160;',' ',$decodedArray['data'][$i]['content']).'</span>  <span class="microblog-from" style="font-size:smaller;">-'.date("Y/m/d", $decodedArray ['data'][$i]['timestamp']).' 来自 '.$decodedArray ['data'][$i]['fromarea'].'-</span></div></li>';
-		}
-		echo '</ul>';
+	echo '</ul>';
 }
 
 //扩展类 WP_Widget
 class TencentMicroblog extends WP_Widget
 {
 	//定义后台面板展示文字
-	function TencentMicroblog(){
-		$widget_des = array('classname'=>'wordpress-tencent-microblog','description'=>'在博客显示腾讯微博的发言');
-		$this->WP_Widget(false,'腾讯微博',$widget_des);
+	function TencentMicroblog() {
+		$widget_des = array( 'classname'=>'wordpress-tencent-microblog', 'description'=>'在博客显示腾讯微博的发言' );
+		$this->WP_Widget( false, '腾讯微博', $widget_des );
 	}
 
 	//定义widget后台选项
-	function form($instance){
-		$instance = wp_parse_args((array)$instance,array(
-		'title'=>'腾讯微博',
-		'username'=>'Weibo_ID',
-		'api'=>'4735433f9fbf9bb2983d9095595f5c5c36abdd0b',
-		'number'=>1,
-		'time'=>'3600'));
-		$title = htmlspecialchars($instance['title']);
-		$username = htmlspecialchars($instance['username']);
-		$api = htmlspecialchars($instance['api']);
-		$number = htmlspecialchars($instance['number']);
-		$time = htmlspecialchars($instance['time']);
-		echo '<p><b>首次使用获取官方API--></b><a target="_blank" href="http://dev.open.t.qq.com/websites/sign?explain=1">点此获取</a></p><p style="color:#FF3333;">任何问题请@我的微博<a target="_blank" href="http://t.qq.com/hzlzh-com">hzlzh-com</a> 反馈</p><p><label for="'.$this->get_field_name('title').'">侧边栏标题:<input style="width:200px;" id="'.$this->get_field_id('title').'" name="'.$this->get_field_name('title').'" type="text" value="'.$title.'" /></label></p>
-		<p><label for="'.$this->get_field_name('username').'">用户名:<input style="width:200px;" id="'.$this->get_field_id('username').'" name="'.$this->get_field_name('username').'" type="text" value="'.$username.'" /></label></p>
-		<p><label for="'.$this->get_field_name('api').'">API地址(sign值): <a target="_blank" href="http://zlz.im/wordpress-tencent-microblog/">[?]</a><input style="width:200px;" id="'.$this->get_field_id('api').'" name="'.$this->get_field_name('api').'" type="text" value="'.$api.'" /></label></p>
-		<p><label for="'.$this->get_field_name('number').'">显示数量:<input style="width:200px" id="'.$this->get_field_id('number').'" name="'.$this->get_field_name('number').'" type="text" value="'.$number.'" /></label></p>
-		<p><label for="'.$this->get_field_name('time').'">缓存时间:<input style="width:200px" id="'.$this->get_field_id('time').'" name="'.$this->get_field_name('time').'" type="text" value="'.$time.'" />秒</label></p>';
+	function form( $instance ) {
+		$decodedArray = OpenSDK_Tencent_Weibo::call( 'user/info' );
+		$instance = wp_parse_args( (array)$instance, array(
+				'title'=>'腾讯微博',
+				'username'=>'Weibo_ID',
+				'number'=>1,
+				'time'=>'3600' ) );
+		$title = htmlspecialchars( $instance['title'] );
+		$username = htmlspecialchars( $instance['username'] );
+		$number = htmlspecialchars( $instance['number'] );
+		$time = htmlspecialchars( $instance['time'] );
+		if ( isset( $_GET['exit'] ) ) {
+			echo '<p><a class="button-primary widget-control-save" href="?go_oauth">点击OAuth授权</a></p>';}
+		else if ( isset( $_GET['oauth_token'] ) && isset( $_GET['oauth_verifier'] ) ) {
+			echo '<p><a style="cursor: default;" class="button-primary widget-control-save">已成功授权</a> <img src="'.$decodedArray['data']['head'].'/20" alt=""/> <span>@'.$decodedArray['data']['nick'].'</span></p>';}
+		else if ( OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::ACCESS_TOKEN ) && OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET ) ) {
+			echo '<p><a style="cursor: default;" class="button-primary widget-control-save">已成功授权</a> <img src="'.$decodedArray['data']['head'].'/20" alt=""/> <span>@'.$decodedArray['data']['nick'].'</span> <a href="?exit">注销</a></p>';}
+		else{
+			echo '<p><a class="button-primary widget-control-save" href="?go_oauth">点击OAuth授权</a></p>';}
+		echo '<p style="color:#FF3333;">任何反馈@<a target="_blank" href="http://t.qq.com/hzlzh-com">hzlzh-com</a> 反馈</p><p><label for="'.$this->get_field_name( 'title' ).'">侧边栏标题:<input style="width:200px;" id="'.$this->get_field_id( 'title' ).'" name="'.$this->get_field_name( 'title' ).'" type="text" value="'.$title.'" /></label></p>
+		<p><label for="'.$this->get_field_name( 'username' ).'">用户名:  <i>(字母+数字)</i><input style="width:200px;" id="'.$this->get_field_id( 'username' ).'" name="'.$this->get_field_name( 'username' ).'" type="text" value="'.$username.'" /></label></p>
+		<p><label for="'.$this->get_field_name( 'number' ).'">显示数量: <i>(1-100条)</i><input style="width:200px" id="'.$this->get_field_id( 'number' ).'" name="'.$this->get_field_name( 'number' ).'" type="text" value="'.$number.'" /></label></p>
+		<p><label for="'.$this->get_field_name( 'time' ).'">缓存时间:<input style="width:200px" id="'.$this->get_field_id( 'time' ).'" name="'.$this->get_field_name( 'time' ).'" type="text" value="'.$time.'" />秒</label></p>';
 	}
-	
+
 	//更新函数
-	function update($new_instance,$old_instance){
+	function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
-		$instance['title'] = strip_tags(stripslashes($new_instance['title']));
-		$instance['username'] = strip_tags(stripslashes($new_instance['username']));
-		$instance['api'] = strip_tags(stripslashes($new_instance['api']));
-		$instance['number'] = strip_tags(stripslashes($new_instance['number']));
-		$instance['time'] = strip_tags(stripslashes($new_instance['time']));
+		$instance['title'] = strip_tags( stripslashes( $new_instance['title'] ) );
+		$instance['username'] = strip_tags( stripslashes( $new_instance['username'] ) );
+		$instance['number'] = strip_tags( stripslashes( $new_instance['number'] ) );
+		$instance['time'] = strip_tags( stripslashes( $new_instance['time'] ) );
 		return $instance;
 	}
 
 	//显示函数
-	function widget($args,$instance){
-		extract($args);
-		$title = apply_filters('widget_title',empty($instance['title']) ? '&nbsp;' : $instance['title']);
-		$username = empty($instance['username']) ? 'Weibo_ID' : $instance['username'];
-		$number = empty($instance['number']) ? 1 : $instance['number'];
-		$api = empty($instance['api']) ? '4735433f9fbf9bb2983d9095595f5c5c36abdd0b' : $instance['api'];
-		$time = empty($instance['time']) ? 3600 : $instance['time'];
-		
+	function widget( $args, $instance ) {
+		extract( $args );
+		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '&nbsp;' : $instance['title'] );
+		$username = empty( $instance['username'] ) ? 'Weibo_ID' : $instance['username'];
+		$number = empty( $instance['number'] ) ? 1 : $instance['number'];
+		$time = empty( $instance['time'] ) ? 3600 : $instance['time'];
+
 		echo $before_widget;
 		echo $before_title . $title . $after_title;
-		display_tencent("username=$username&number=$number&api=$api&time=$time");
+		display_tencent( "username=$username&number=$number&time=$time" );
 		echo $after_widget;
 	}
 }
 
 //注册widget
-function TencentMicroblogInit(){
-	register_widget('TencentMicroblog');
+function TencentMicroblogInit() {
+	register_widget( 'TencentMicroblog' );
 }
 
-add_action('widgets_init','TencentMicroblogInit');
+add_action( 'widgets_init', 'TencentMicroblogInit' );
 ?>
