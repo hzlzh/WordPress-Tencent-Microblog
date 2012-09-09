@@ -32,6 +32,7 @@ if ( $WTM_settings1 ) {
 
 $exit = false;
 if ( isset( $_GET['exit'] ) ) {
+	delete_option( 'WTM_settings' );
 	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN, null );
 	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::ACCESS_TOKEN, null );
 	OpenSDK_Tencent_Weibo::setParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET, null );
@@ -54,6 +55,7 @@ else if ( isset( $_GET['oauth_token'] ) && isset( $_GET['oauth_verifier'] ) ) {
 			$WTM_settings['oauth_verifier'] = $_GET['oauth_verifier'];
 			$WTM_settings['access_token'] = OpenSDK_Tencent_Weibo::getParam( OpenSDK_Tencent_Weibo::ACCESS_TOKEN );
 			$WTM_settings['oauth_token_secret'] = OpenSDK_Tencent_Weibo::getParam( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET );
+			$WTM_settings['num'] = 5;
 			update_option( 'WTM_settings', $WTM_settings );
 			//var_dump($uinfo);
 		}
@@ -72,7 +74,7 @@ else if ( isset( $_GET['go_oauth'] ) ) {
 function display_tencent( $args = '' ) {
 	$default = array(
 		'username'=>'Weibo_ID',
-		'number'=>'1',
+		'number'=>'5',
 		'time'=>'3600' );
 	$r = wp_parse_args( $args, $default );
 	extract( $r );
@@ -107,7 +109,7 @@ class TencentMicroblog extends WP_Widget
 		$instance = wp_parse_args( (array)$instance, array(
 				'title'=>'腾讯微博',
 				'username'=>'Weibo_ID',
-				'number'=>1,
+				'number'=>5,
 				'time'=>'3600' ) );
 		$title = htmlspecialchars( $instance['title'] );
 		$username = htmlspecialchars( $instance['username'] );
@@ -158,4 +160,47 @@ function TencentMicroblogInit() {
 }
 
 add_action( 'widgets_init', 'TencentMicroblogInit' );
+
+function TencentMicroblogPage() {
+	//add_options_page('TencentMicroblogInit Options', 'Wordpress Tencent Microblog', 10, 'wordpress-tencent-microblog/options.php');
+	add_options_page('腾讯微博插件', '腾讯微博插件', 'manage_options','WTM-options', 'TencentMicroblog_options_page');
+}
+add_action('admin_menu', 'TencentMicroblogPage');
+
+function TencentMicroblog_options_page() {
+?>
+<div class="wrap">
+<?php screen_icon(); ?>
+<h2>腾讯微博插件设置</h2>
+<br />
+<p>
+<?php
+$decodedArray = OpenSDK_Tencent_Weibo::call( 'user/info' );
+if ( isset( $_GET['exit'] ) ) {
+			echo '<p><a class="button-primary widget-control-save" href="?page=WTM-options&go_oauth">点击OAuth授权</a></p>';}
+		else if ( isset( $_GET['oauth_token'] ) && isset( $_GET['oauth_verifier'] ) ) {
+			echo '<p>[状态]： <a style="cursor: default;" class="button-primary widget-control-save">已成功授权</a></p>'.
+			'<br /> <p>[已授权帐号]： <img src="'.$decodedArray['data']['head'].'/40" alt=""/> <span>@'.$decodedArray['data']['nick'].'</span></p>';}
+		else if ( OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::ACCESS_TOKEN ) && OpenSDK_Tencent_Weibo::getParam ( OpenSDK_Tencent_Weibo::OAUTH_TOKEN_SECRET ) ) {
+			echo '<p>[状态]： <a style="cursor: default;" class="button-primary widget-control-save">已成功授权</a></p>'.
+			'<br /> <p>[已授权帐号]： <img src="'.$decodedArray['data']['head'].'/40" alt=""/> <span>@'.$decodedArray['data']['nick'].'</span> <a href="?page=WTM-options&exit">注销?</a></p>';}
+		else{
+			echo '<p><a class="button-primary widget-control-save" href="?go_oauth">点击OAuth授权</a></p>';}
+		
+?>
+<div class="update-nag" id="donate">
+<div style="text-align: center;">
+<span style="font-size: 20px;margin: 5px 0;display: block;">使用说明</span>
+<br />
+授权完成之后，在[外观] -> <a href="/wp-admin/widgets.php">[小挂件]</a>中使用，也可以使用下面代码在WordPress任意页面的任意位置调用：
+<br />
+<code>&lt;?php display_tencent('number=5'); ?&gt;</code> 
+<br />
+任何反馈 -> @<a target="_blank" href="http://twitter.com/hzlzh">hzlzh</a>
+</div>
+</div>
+</p>
+</div>
+<?php
+}
 ?>
