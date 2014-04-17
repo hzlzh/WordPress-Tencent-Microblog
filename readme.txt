@@ -3,14 +3,20 @@ Contributors: hzlzh
 Donate link: http://zlz.im/wordpress-tencent-microblog/
 Tags: 腾讯微博,QQ,微博,腾讯,同步,Tencent,microblog,weibo
 Requires at least: 2.7
-Tested up to: 3.4.2
-Stable tag: 1.1.2
+Tested up to: 3.9
+Stable tag: 1.1.3
 
-显示腾讯微博发言的插件，精简，纯洁，快速，安全可靠，采取缓存机制，官方API接口，支持1-10条发言输出。
+在博客展示【腾讯微博】发言的插件，精简，纯洁，快速，安全可靠，采取缓存机制，官方Oauth 2.0 API接口，支持1-10条发言输出。
 
 == Description ==
 
-显示腾讯微博发言的插件，从官方处获得时间轴，安全可靠。采用了缓存机制，可自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，也可以在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>` 调用。
+在 Wordpress 博客展示 腾讯微博 发言的插件。
+
+* 官方Oauth 2.0 API接口，获得时间轴安全可靠。
+* 采用了缓存机制，可自定义刷新时间，不占用站点加载速度。
+
+可以在[外观]--[小工具]中调用，也可以在任意位置使用：
+`<?php display_tencent('username=Weibo_ID&number=5'); ?>` 调用。
 
 == Installation ==
 
@@ -25,11 +31,9 @@ Stable tag: 1.1.2
 
 可以！需要激活插件后，在任意位置使用`<?php display_tencent('username=Weibo_ID&number=5'); ?>`调用即可，只需要修改`Weibo_ID` 为你的腾讯微博帐号，`5`是你想要展示的条数。
 
-
-
 = 使用之前必须先OAuth认证登录吗？ =
 
-是的，目前采用官方OAuth1.0
+是的，目前采用官方OAuth 2.0
 
 = 如果我的HOST不支持copy()函数怎么办？ =
 
@@ -41,6 +45,10 @@ Stable tag: 1.1.2
 2. 后台截图
 
 == Changelog ==
+
+= V 1.1.3 =
+*重写缓存机制
+*兼容到WordPress 3.9
 
 = V 1.1.2 =
 *使用OAuth授权获取数据

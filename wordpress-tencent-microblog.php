@@ -1,15 +1,15 @@
 <?php
 /*
 Plugin Name: Wordpress Tencent Microblog
-Plugin URI: http://zlz.im/wordpress-tencent-microblog/
+Plugin URI: http://hzlzh.io/wordpress-tencent-microblog/
 Description: 显示腾讯微博发言的插件，OAuth认证授权，安全可靠。采用了缓存机制，自定义刷新时间，不占用站点加载速度。可以在[外观]--[小工具]中调用，或者在任意位置使用 <code>&lt;?php display_tencent('username=you-ID&number=5'); ?&gt;</code> 调用。
-Version: 1.1.2
+Version: 1.1.3
 Author: hzlzh
-Author URI: http://zlz.im/
+Author URI: http://hzlzh.io/
 
 */
 
-//如果有遇到问题，请到http://zlz.im/wordpress-tencent-microblog/ 得到技术支持！
+//如果有遇到问题，请到 http://hzlzh.io/wordpress-tencent-microblog/ 得到技术支持！
 if ( ! defined( 'WP_PLUGIN_URL' ) )
 	define( 'WP_PLUGIN_URL', WP_CONTENT_URL. '/plugins' );//获得plugins网页路径
 if ( ! defined( 'WP_PLUGIN_DIR' ) )
@@ -17,6 +17,7 @@ if ( ! defined( 'WP_PLUGIN_DIR' ) )
 
 set_include_path( dirname( dirname( __FILE__ ) ) . '/wordpress-tencent-microblog/lib/' );
 require_once 'OpenSDK/Tencent/Weibo.php';
+require_once 'simpleCache.php';
 include 'OpenSDK/Tencent/tencentappkey.php';
 
 OpenSDK_Tencent_Weibo::init( $appkey, $appsecret );
@@ -79,14 +80,27 @@ function display_tencent( $args = '' ) {
 	$r = wp_parse_args( $args, $default );
 	extract( $r );
 
-	$uinfo = OpenSDK_Tencent_Weibo::call( 'statuses/broadcast_timeline',
+	
+$path = dirname( dirname( __FILE__ ) ) . '/wordpress-tencent-microblog/xxx';
+    $cache = new SimpleCache();
+    $cache->cache_path = $path;
+    $cache->cache_time = 43200;
+    date_default_timezone_set('PRC');
+    if ($data = $cache->get_cache(date('Y-m-d-H'))) {
+        $list = json_decode($data);
+    } else {
+    	$uinfo = OpenSDK_Tencent_Weibo::call( 'statuses/broadcast_timeline',
 		array(
 			'reqnum' => $number,
 			'type' => '1',
 			'contenttype' => '0',
 		) );
+        $cache->set_cache(date('Y-m-d-H'), json_encode($uinfo));
+    }
 
-	$decodedArray =$uinfo;
+
+
+	$decodedArray =$list;
 	echo '<ul style="list-style-type:none;">';
 	foreach ( $decodedArray['data']['info'] as $value ) {
 		echo '<li><div class="microblog"><a href="http://t.qq.com/'.$value['nick'].'" rel="external nofollow" title="来自 腾讯微博" target="_blank" style="padding-right:3px;"><img class="microblog-ico"  alt="腾讯微博" src="'.WP_PLUGIN_URL.'/wordpress-tencent-microblog/txwb.png" /></a><span class="microblog-content">'.str_replace( '&#160;', ' ', $value['origtext'] ).'</span>  <span class="microblog-from" style="font-size:smaller;">-'.date( "Y/m/d", $value['timestamp'] ).' 来自 '.$value['from'].'-</span></div></li>';
